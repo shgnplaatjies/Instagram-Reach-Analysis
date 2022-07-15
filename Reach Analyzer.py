@@ -9,4 +9,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import PassiveAggressiveRegressor
 
 data = pd.read_csv('Instagram.csv', encoding='latin-1')
-print(data.isnull().sum())
+
+data = data.dropna()
+
+
+print(data.info())
