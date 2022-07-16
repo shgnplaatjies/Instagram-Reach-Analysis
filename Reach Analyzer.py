@@ -21,27 +21,32 @@ def remove_null(data):
     print("Checking for data types",data.info()) # Check for data types
     return data
 
-def distImpressionsFromVariousSources(data):
+# Function to plot distribution of impressions from all relevant sources in a given dataset
+# Use the "From" keyword to filter the features in the dataset that relate to impressions from a particular source
+def distImpressionsFromVariousSources(data, keyword):
+    
     plt.figure(figsize=(10,8)) # Plot the data with dimensions 10x8
     plt.style.use('fivethirtyeight') # Set the style of the plot
-    plt.title("Distribution of Impressions From Home Page") #Set the title of the graph 
-
-    sns.distplot(data['From Home'], label ="From Home") # Plot the distribution of Home impressions in the data 
-    sns.distplot(data['From Hashtags'], label ="From Hashtags") 
-    sns.distplot(data['From Explore'], label ="From Explore") 
-
+    plt.title("Distribution of Impressions From Various Sources") #Set the title of the graph 
+    for i in data:
+            if str(i)[:3] == keyword[:3]: # Check if the feature starts with "From" and if it does, plot the data. That means that impressions can come from this feature
+                sns.distplot(data[i], label =i) # Plot the distribution of impressions from all possible various sources in the data                
     plt.legend(loc='upper right') # Set the legend location
     plt.show() # Show the distribution of Impressions from Explore Page
 
 # Function to create pie chart of total impressions from various sources
-def pieTotalImpressionsVariousSources(data):
-    home = data["From Home"].sum() # Calculate the total number of impressions from Home Page, Hashtags, Explore Page, and Other
-    hashtags = data["From Hashtags"].sum()
-    explore = data["From Explore"].sum()
-    other = data["From Other"].sum()
+# Use the "From" keyword to filter the features in the dataset that relate to impressions from a particular source
+def pieTotalImpressionsVariousSources(data, keyword):
+    impression_features_labels = [] # Create a list to store the features that relate to impressions from various sources
+    impression_features_values = [] # Create a list to store the summed value of each feature that relates to impressions from various sources
+    for i in data:
+            if str(i)[:3] == keyword[:3]: # Check if the feature starts with "From" and if it does, plot the data. (verbose) That means that impressions can come from this feature
+                impression_features_labels.append(i) # Append the feature to the list
+                impression_features_values.append( data[i].sum() ) # Calculate the total number of impressions from all relevant sources
 
-    labels = ['Home', 'Hashtags', 'Explore', 'Other'] # Set the labels for the pie chart
-    values = [home, hashtags, explore, other] # Set the values for the pie chart
+    print(impression_features_labels, impression_features_values)
+    labels = impression_features_labels # Set the labels for the pie chart
+    values = impression_features_values # Set the values for the pie chart
 
     fig = px.pie(data, values=values, names=labels, title = 'Impressions on Instagram Posts From Various Sources') # Plot the pie chart
     fig.show()
@@ -61,13 +66,14 @@ def plot_word_cloud(data, target_feature):
     return wordcloud
     
 data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
+keyword = "From" # Set the keyword (prefix) to filter the features that relate to impressions from a particular source
 
 data = remove_null(data) # Remove null data points
 
-# distImpressionsFromVariousSources(data) # Plot the distribution of Impressions from various sources
+distImpressionsFromVariousSources(data, keyword) # Plot the distribution of Impressions from various sources
+pieTotalImpressionsVariousSources(data, keyword) # Plot the pie chart for the total number of impressions from various sources
 
-# pieTotalImpressionsVariousSources(data) # Plot the pie chart for the total number of impressions from various sources
+# wordcloud_caption = plot_word_cloud(data, 'Caption') # Plot the wordcloud for the captions of the posts
+# wordcloud_hashtags = plot_word_cloud(data, 'Hashtags') # Plot the wordcloud for the hashtags of the posts
 
-wordcloud_caption = plot_word_cloud(data, 'Caption') # Plot the wordcloud for the captions of the posts
-wordcloud_hashtags = plot_word_cloud(data, 'Hashtags') # Plot the wordcloud for the hashtags of the posts
 
