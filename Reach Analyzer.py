@@ -22,14 +22,14 @@ print("Checking for data types",data.info()) # Check for data types
 plt.figure(figsize=(10,8)) # Plot the data with dimensions 10x8
 plt.style.use('fivethirtyeight') # Set the style of the plot
 plt.title("Distribution of Impressions From Home Page") #Set the title of the graph 
-sns.distplot(data['From Home']) # Plot the distribution of Home impressions in the data | Blue 
-# plt.show() # Show the distribution of Impressions from Home Page
 
+sns.distplot(data['From Home'], label ="From Home") # Plot the distribution of Home impressions in the data | Blue 
 sns.distplot(data['From Hashtags'], label ="From Hashtags") # Plot the distribution of Hashtags impressions in the data | Red
-# plt.show() # Show the distribution of Impressions from Hashtags Page
-
 sns.distplot(data['From Explore'], label ="From Explore") # Plot the distribution of Explore impressions in the data | Yellow
+
+plt.legend(loc='upper right') # Set the legend location
 plt.show() # Show the distribution of Impressions from Explore Page
+
 
 
 
