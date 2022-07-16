@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import PassiveAggressiveRegressor
 
+# To adapt this code: Change the path to the data file, change the figsize values 
+
 def remove_null(data):
     print("Checking for null values in the data")
     if data.isnull().sum().sum() > 0:
@@ -43,6 +45,20 @@ def pieTotalImpressionsVariousSources(data):
 
     fig = px.pie(data, values=values, names=labels, title = 'Impressions on Instagram Posts From Various Sources') # Plot the pie chart
     fig.show()
+
+# Function to plot word cloud of the top 50 most used words in a target feature, returns the word cloud image 
+def plot_word_cloud(data, target_feature):
+    text = " ".join(data[target_feature]) # Join the captions of the posts into a single string
+
+    stopwords = set(STOPWORDS) # Set the stopwords
+    wordcloud = WordCloud(stopwords=stopwords, background_color='white', max_words=50, max_font_size=50).generate(text) # Create the wordcloud
+
+    plt.style.use('classic') # Set the style of the plot
+    plt.figure( figsize=(12,10)) # Set the dimensions of the plot
+    plt.imshow(wordcloud, interpolation='bilinear') # Plot the wordcloud with bilinear interpolation
+    plt.axis("off") # Turn off the axis
+    plt.show() # Show the wordcloud
+    return wordcloud
     
 data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
 
@@ -52,4 +68,6 @@ data = remove_null(data) # Remove null data points
 
 # pieTotalImpressionsVariousSources(data) # Plot the pie chart for the total number of impressions from various sources
 
+wordcloud_caption = plot_word_cloud(data, 'Caption') # Plot the wordcloud for the captions of the posts
+wordcloud_hashtags = plot_word_cloud(data, 'Hashtags') # Plot the wordcloud for the hashtags of the posts
 
