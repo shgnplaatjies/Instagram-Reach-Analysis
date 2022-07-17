@@ -242,9 +242,31 @@ def plotConversionRate(data, conversion_feature = 'Profile Visits', conversion_t
     plot = px.scatter(data, y=conversion_rate, x=data[conversion_feature], size =conversion_feature,
                       trendline = "ols", title=f"Relationship: Effect of {conversion_feature} on {conversion_target} conversion rate") # Plot the distribution of impressions from all possible various sources in the data
     return plot
+   
+# Factory function to create a passive aggressive regressor (linear regression) model to predict a target, for a given set of features
+def getModelPassiveAggressiveRegressor(data, features_list, target):
+    features = np.array(data[features_list])
+    y = np.array(data[target])
+    
+    x_train, x_validation, y_train, y_validation = train_test_split(features, y, test_size=0.2, random_state=42)
+    
+    model = PassiveAggressiveRegressor()
+    model.fit(x_train, y_train)
+    score = model.score(x_validation, y_validation)
+    print("Model Accuracy on Validation Data:",score)
+    
+    return model
+
+# Function returns a datapoint for the specified set of features and at their specified target values. i.e. test maximum data point for the given features, test average data point for the given features, test minimum data point for the given features 
+def getTargetStub(data,y, features_list,  target='max'):
+    test = compareListOfFeaturesToFeature(data, y, features_list, target=[target])
+    test_stub = []
+    for i in test.values():
+        test_stub.append(i[target])
+    return test_stub
+    
 
 def main():
-    print("Hello World!")
     data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
     keyword = "From" # Set the keyword (prefix) to filter the features that relate to impressions from a particular source
     engagement_features_list = ['Likes', 'Comments', 'Shares', 'Saves'] # List of features to be used for engagement
@@ -282,9 +304,15 @@ def main():
     # total_conversion_rate = getFeatureConversionRateTotal(data, 'Profile Visits') # Get the total conversion rate for the given feature
     # Print([f"Total conversion rate of {'Profile Visits'}",total_conversion_rate])
     
-    # TODO: Create a machine learning model to predict the number of followers for a given post
-
-
+    features_list = ['Likes','Saves','Comments','Shares','Profile Visits', 'Follows']
+    y = 'Impressions'
+    test_stub_for_features = np.array([getTargetStub(data, y, features_list, 'max')])
+    model = getModelPassiveAggressiveRegressor(data, features_list, y)
+    
+   
+    
+    y_prediction = model.predict(test_stub_for_features)
+    print(y_prediction)
 
 if __name__ == "__main__":
     main()
