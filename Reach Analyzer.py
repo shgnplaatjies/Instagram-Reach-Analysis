@@ -243,41 +243,50 @@ def plotConversionRate(data, conversion_feature = 'Profile Visits', conversion_t
                       trendline = "ols", title=f"Relationship: Effect of {conversion_feature} on {conversion_target} conversion rate") # Plot the distribution of impressions from all possible various sources in the data
     return plot
 
+def main():
+    print("Hello World!")
+    data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
+    keyword = "From" # Set the keyword (prefix) to filter the features that relate to impressions from a particular source
+    engagement_features_list = ['Likes', 'Comments', 'Shares', 'Saves'] # List of features to be used for engagement
+    impressions_features_list = ['From Home', 'From Hashtags','From Explore', 'From Other'] # List of features to be used for traffic
+    numerical_features_list = ['Impressions', 'From Home', 'From Hashtags','From Explore', 'From Other', 'Likes', 'Comments', 'Shares', 'Saves', 'Profile Visits', 'Follows'] # List of features to be used for numerical values
 
-data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
-keyword = "From" # Set the keyword (prefix) to filter the features that relate to impressions from a particular source
-engagement_features_list = ['Likes', 'Comments', 'Shares', 'Saves'] # List of features to be used for engagement
-impressions_features_list = ['From Home', 'From Hashtags','From Explore', 'From Other'] # List of features to be used for traffic
-numerical_features_list = ['Impressions', 'From Home', 'From Hashtags','From Explore', 'From Other', 'Likes', 'Comments', 'Shares', 'Saves', 'Profile Visits', 'Follows'] # List of features to be used for numerical values
+    data = remove_null(data) # Remove null data points
+
+    # norm_distr_impressions_all_sources =  distImpressionsFromVariousSources(data, impressions_features_list) # Plot the distribution of Impressions from various sources
+    # norm_distr_impressions_all_sources.show()
+
+    # pie_chart = pieTotalImpressionsVariousSources(data, traffic_features_list) # Plot the pie chart for the total number of impressions from various sources
+    # pie_chart.show()
+
+    # wordcloud_captions = createWordCloud(data, 'Caption') # Plot the wordcloud for the captions of the posts
+    # wordcloud_captions.show() # Plot the wordcloud for the captions of the posts
+    # wordcloud_hashtags = createWordCloud(data, 'Hashtags') # Plot the wordcloud for the hashtags of the posts
+    # wordcloud_hashtags.show() # Plot the wordcloud for the hashtags of the posts
+
+    # feature_independent = 'Likes' # Set the feature to be analyzed
+    # target_stats = ['correlation', 'r2', 'coefficient of variation', 'mean', 'standard deviation', 'skewness']
+    # stats_for_data = compareListOfFeaturesToFeature(data, feature_independent, features_list= ['From Explore', 'Follows', 'Profile Visits'], target=target_stats) # Compare the differences and relationship between Impressions and all other features
+    # Print([f"Getting stats for {feature_independent}",stats_for_data])
+
+    # target_stats = ['correlation', 'coefficient of variation', 'mean', 'standard deviation', 'skewness']
+    # metricsImpressionsAll = getStatsRelativeToTarget(data, engagement_features_list, 'Impressions') # Get the metrics for Impressions
+    # print(f"All metrics related to {'Impressions'}", metricsImpressionsAll)
+
+    # data_r2 = sortDataframeDescending(metricsImpressionsAll, 'r2') # Sort the dataframe by r2 score, more accurate than the correlation value
+    # createCSV(data_r2) # Create a CSV file for the metrics
+    
+    # conversion_plot = plotConversionRate(data, 'Profile Visits') # Plot the conversion rate for the given feature
+    # conversion_plot.show() # Plot the conversion rate for the given feature
+
+    # total_conversion_rate = getFeatureConversionRateTotal(data, 'Profile Visits') # Get the total conversion rate for the given feature
+    # Print([f"Total conversion rate of {'Profile Visits'}",total_conversion_rate])
+    
+    # TODO: Create a machine learning model to predict the number of followers for a given post
 
 
-data = remove_null(data) # Remove null data points
 
-# norm_distr_impressions_all_sources =  distImpressionsFromVariousSources(data, impressions_features_list) # Plot the distribution of Impressions from various sources
-# norm_distr_impressions_all_sources.show()
-# pie_chart = pieTotalImpressionsVariousSources(data, traffic_features_list) # Plot the pie chart for the total number of impressions from various sources
-# pie_chart.show()
-# wordcloud_captions = createWordCloud(data, 'Caption') # Plot the wordcloud for the captions of the posts
-# wordcloud_captions.show() # Plot the wordcloud for the captions of the posts
-# wordcloud_hashtags = createWordCloud(data, 'Hashtags') # Plot the wordcloud for the hashtags of the posts
-# wordcloud_hashtags.show() # Plot the wordcloud for the hashtags of the posts
-
-feature_independent = 'Likes' # Set the feature to be analyzed
-target_stats = ['correlation', 'r2', 'coefficient of variation', 'mean', 'standard deviation', 'skewness']
-stats_for_data = compareListOfFeaturesToFeature(data, feature_independent, features_list= ['From Explore', 'Follows', 'Profile Visits'], target=target_stats) # Compare the differences and relationship between Impressions and all other features
-Print([f"Getting stats for {feature_independent}",stats_for_data])
-
-target_stats = ['correlation', 'coefficient of variation', 'mean', 'standard deviation', 'skewness']
-metricsImpressionsAll = getStatsRelativeToTarget(data, engagement_features_list, 'Impressions') # Get the metrics for Impressions
-print(f"All metrics related to {'Impressions'}", metricsImpressionsAll)
-
-data_r2 = sortDataframeDescending(metricsImpressionsAll, 'r2') # Sort the dataframe by r2 score, more accurate than the correlation value
-print(data_r2)
-createCSV(data_r2) # Create a CSV file for the metrics
-   
-conversion_plot = plotConversionRate(data, 'Profile Visits') # Plot the conversion rate for the given feature
-conversion_plot.show() # Plot the conversion rate for the given feature
+if __name__ == "__main__":
+    main()
 
 
-total_conversion_rate = getFeatureConversionRateTotal(data, 'Profile Visits') # Get the total conversion rate for the given feature
-Print([f"Total conversion rate of {'Profile Visits'}",total_conversion_rate])
