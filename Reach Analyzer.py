@@ -365,13 +365,32 @@ def plotMethod(data, y="None", x="None", type="scatter",  color = "None", size="
     func = next(tree_search(plot_categories_dict, type))
     # storing the function in a variable 
     
-    # TODO: Add a check to make sure the function is valid
-    # TODO: If one of the optional params is == "None", don't pass it to the function. This will make the function call more flexible.
+    optional_params_array = [y, x, color, size, max_words, max_font_size, fig_size, interpolation, trendline, title]
+    
+    # TODO: Add a check to make sure the generalized function call is valid. The type should match it's corresponding optional parameters. (And ignore incompatible parameters without interrupting user experience)
+    # TODO: I.e., if one of the optional params is == "None", don't pass it to the function. This will make the function call more flexible. 
+    # TODO: This is tricky because function calls are kind of hard-coded. The amount of optional props for all the relevant px. functions is pretty Huge and combinations, like permutations, grow exponentially.
     try:
-        if color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        if size == "None": plot = func(data, y=y, x=x, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        if size == "None" and color == "None": plot = func(data, y=y, x=x, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if color != "None": plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if size == "None": plot = func(data, y=y, x=x, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if size != "None": plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if size == "None" and color == "None": plot = func(data, y=y, x=x, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if size == "None" and color != "None": plot = func(data, y=y, x=x, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if size != "None" and color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        # if size != "None" and color != "None": plot = func(data, y=y, x=x, size=size, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
         
+        for feature_i in optional_params_array:
+            for feature_j in optional_params_array:
+                if feature_i == "None" and feature_j == "None":
+                    # TODO: Solved looping for the condition of isNone.. (sort of) But I don't yet know how to pass a functions parameters as an array, in the same way as a lambda I guess...
+                    plot = func(data, y=y, x=x, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+                if feature_i == "None":
+                    plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+                if feature_j == "None":
+                    plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+                    
+
         
         
     except: print(f"Error: Please check the type of plot you want to create matches the type of data you have created")
@@ -381,7 +400,6 @@ def plotMethod(data, y="None", x="None", type="scatter",  color = "None", size="
 def plotFeatureVsTarget(data, target, feature, color = "", size="", type="scatter", show="False", max_words=100, max_font_size=60, fig_size=(15,15), interpolation='bilinear'):
     if color == "": color = feature
     if size == "": size = feature 
-    
     
     if (plot_categories_dict["basic"][type]): 
         # plotMethod = lambda funcToDo: funcToDo(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
