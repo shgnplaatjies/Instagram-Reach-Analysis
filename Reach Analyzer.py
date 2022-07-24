@@ -8,6 +8,7 @@ from re import T, U
 import pandas as pd
 import seaborn as sns  
 import plotly.express as px
+import plotly.figure_factory as ff
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from matplotlib.style import use
@@ -18,9 +19,90 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.linear_model import PassiveAggressiveRegressor
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+from collections.abc import Mapping
+import wordcloud
 
 # To adapt this code: Change the path to the data file, change the figsize values 
 
+def createGlobalStatsVariables():
+    # The name of each plot category and the plot types that are available for them.
+    #______________________________________________________________________________________________________________________________
+    
+    basic = {'scatter' : px.scatter, # Basic type of plot
+             'line': px.line,
+             'area': px.area,
+             'bar': px.bar,
+             'funnel': px.funnel,
+             'timeline': px.timeline}
+  
+    part_of_whole = {'pie': px.pie, # Types of plot that show how certain data fits as part of a greater 'whole' data set
+                     'sunburst': px.sunburst,
+                     'treemap': px.treemap,
+                     'icile': px.icicle,
+                     'funnel_area': px.funnel_area,}
+   
+    distribution_1d = {'histogram': px.histogram,  # Types of plot that show 1D distributions of data
+                       'distplot': ff.create_distplot,
+                       'box': px.box,
+                       'violin': px.violin, 
+                       'strip': px.scatter,
+                       'ecdf': px.ecdf}
+  
+    distribution_2d = {'density': px.density_contour, # Types of plot that show 2D distributions of data: px. 2 axis so 2 features (columns)
+                       'heatmap': px.density_heatmap}
+  
+    distribution_3d = {'scatter_3d': px.scatter_3d, # Types of plot that show 3D distributions of data: px. 3 axis so 3 features (columns)
+                       'line_3d': px.line_3d}
+  
+    matrix = {'scatter_matrix': px.scatter_matrix, # Types of plot that show a matrix of data: px. (vector of columns)
+              'imshow': px.imshow}
+  
+    multi_dimensional = {'scatter_matrix': px.scatter_matrix, # Types of plot that show a multi dimensional data
+                         'imshow': px.imshow,
+                         'parallel_coordinates': px.parallel_coordinates,
+                         'parallel_categories': px.parallel_categories}
+  
+    tile_maps = {'scatter_mapbox': px.scatter_mapbox, # Types of plot that show a tile map of the data
+                 'line_mapbox': px.line_mapbox,
+                 'chloropleth_mapbox': px.choropleth_mapbox,
+                 'density_mapbox': px.density_mapbox}
+  
+    outline_maps = {'scatter_geo': px.scatter_geo, # Types of plot that show a outline map of the data
+                    'line_geo': px.line_geo,
+                    'chloropleth': px.choropleth}
+   
+    polar_charts = { 'scatter_polar': px.scatter_polar, # Types of plot that show a polar chart of the data
+                    'line_polar': px.line_polar,
+                    'bar_polar': px.bar_polar}
+    
+    ternary_charts = {'ternary': px.line_ternary} # Types of plot that show a ternary chart of the data
+    
+    text_charts = {'text': createWordCloud} # Types of plot that show a text charts and word clouds of the data, categorical input
+    
+    
+     # List of all available plot categories on plotly
+    #______________________________________________________________________________________________________________________________
+    global plot_categories_dict
+    
+    plot_categories_dict = {"basic" : basic, 
+                             "part_of_whole": part_of_whole,
+                             "distribution_1d" : distribution_1d, 
+                             "distribution_2d" : distribution_2d,
+                             "distribution_3d"  : distribution_3d,
+                             "matrix" : matrix,
+                             "image" : matrix,
+                             "multi_dimensional" : multi_dimensional,
+                             "tile_maps" : tile_maps,
+                             "outline_maps" : outline_maps,
+                             "polar_charts" : polar_charts,
+                             "ternary_charts" : ternary_charts,
+                             "text_charts" : text_charts
+                             } 
+
+
+
+def createGlobalVars():
+    createGlobalStatsVariables()
 
 # Function to simplify pp.pprint calls
 def Print(job):
@@ -269,51 +351,50 @@ def getTargetStub(data,y, features_list,  target='max'):
         test_stub.append(i[target])
     return test_stub
 
+
+def tree_search(d, name):
+    if isinstance(d, Mapping):
+        if name in d:
+            yield d[name]
+        for it in d.values():
+            for found in tree_search(it, name):
+                yield found            
+
+  
+def plotMethod(data, y="None", x="None", type="scatter",  color = "None", size="None", max_words="None", max_font_size="None", fig_size="None", interpolation='None', trendline = "None", title= "None"):
+    func = next(tree_search(plot_categories_dict, type))
+    # storing the function in a variable 
+    
+    # TODO: Add a check to make sure the function is valid
+    # TODO: If one of the optional params is == "None", don't pass it to the function. This will make the function call more flexible.
+    try:
+        if color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        if size == "None": plot = func(data, y=y, x=x, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        if size == "None" and color == "None": plot = func(data, y=y, x=x, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+        
+        
+        
+    except: print(f"Error: Please check the type of plot you want to create matches the type of data you have created")
+    #TODO: Add more options to the plot, such as color, max_words, max_font_size, fig_size, interpolation. AND options without a default value    
+
 # Function to plot scatter plot of a given feature against a given target, default is all features and scatter 
-def plotFeatureVsTarget(data, target, feature, color = "", size="", type="scatter", show="False"):
+def plotFeatureVsTarget(data, target, feature, color = "", size="", type="scatter", show="False", max_words=100, max_font_size=60, fig_size=(15,15), interpolation='bilinear'):
     if color == "": color = feature
-    if size == "": size = feature
+    if size == "": size = feature 
     
-    match type:
-        case "scatter":
-            plot = px.scatter(data, y=data[feature], x=data[target], size =data[size], color=data[color],  trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
     
-        case "scatter iris":
-            new_data = px.data.iris()
-            plot = px.scatter(new_data, y=data[feature], x=data[target], size =data[size], trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    if (plot_categories_dict["basic"][type]): 
+        # plotMethod = lambda funcToDo: funcToDo(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+        # You should be calling the function as though it's real here.
+        plot = plotMethod(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
     
-        case "area":
-            plot = px.area(data, y=data[feature], x=data[target], color=data[color], title=f"{type} plot: Effect of {feature} on {target}")
     
-        case "line":
-            plot = px.line(data, y=data[feature], x=data[target], color =target, title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "bar":
-            plot = px.bar(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "scatter_3d":
-            plot = px.scatter_3d(data, y=data[feature], x=data[target], size =feature, title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "line_3d":
-            plot = px.line_3d(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
-            
-        case "box": 
-            plot = px.box(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "violin":
-            plot = px.violin(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "histogram":
-            plot = px.histogram(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "distplot":
-            plot = px.distplot(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
-        
-        case "scatter_matrix":
-            new_data = toIris(data) # Convert the dataframe to the Iris dataset format
-            plot = px.scatter_matrix(new_data)
-        case default:
-            plot = px.scatter(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    # match type:
+    #     case "size":
+    #         plot = px.scatter(data, y=data[feature], x=data[target], size =data[size], color=data[color],  trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    
+    #     case default:
+    #         plot = px.scatter(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
     if show == "True":
         plot.show()
     return plot
@@ -321,6 +402,9 @@ def plotFeatureVsTarget(data, target, feature, color = "", size="", type="scatte
 def toIris(data):
     new_data = px.data.iris()
     return new_data
+
+createGlobalVars() 
+
 
 def main():
     data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
@@ -364,82 +448,6 @@ def main():
     text_features_list = ['Hashtags', # List of features to be used for text data
                           'Caption'
                           ] 
-    
-    
-   
-    # The name of each plot category and the plot types that are available for them.
-    #______________________________________________________________________________________________________________________________
-    
-    basic = ['scatter', # Basic type of plot
-             'line',
-             'area', 
-             'bar', 
-             'funnel', 
-             'timeline']
-  
-    part_of_whole = ['pie', # Types of plot that show how certain data fits as part of a greater 'whole' data set
-                     'sunburst',
-                     'treemap',
-                     'icile',
-                     'funnel_area']
-   
-    distribution_1d = ['histogram',  # Types of plot that show 1D distributions of data
-                       'distplot',
-                       'box', 
-                       'violin', 
-                       'strip', 
-                       'ecdf']
-  
-    distribution_2d = ['density', # Types of plot that show 2D distributions of data, 2 axis so 2 features (columns)
-                       'heatmap', 
-                       'density_contour']
-  
-    distribution_3d = ['scatter_3d', # Types of plot that show 3D distributions of data, 3 axis so 3 features (columns)
-                       'line_3d']
-  
-    matrix = ['scatter_matrix', # Types of plot that show a matrix of data, (vector of columns)
-              'imshow']
-  
-    multi_dimensional = ['scatter_matrix', # Types of plot that show a multi dimensional data
-                         'imshow',
-                         'parallel_coordinates',
-                         'parallel_categories']
-  
-    tile_maps = ['scatter_mapbox', # Types of plot that show a tile map of the data
-                 'line_mapbox', 
-                 'chloropleth_mapbox',
-                 'density_mapbox']
-  
-    outline_maps = ['scatter_geo', # Types of plot that show a outline map of the data
-                    'line_geo',
-                    'chloropleth']
-   
-    polar_charts = [ 'scatter_polar', # Types of plot that show a polar chart of the data
-                    'line_polar',
-                    'bar_polar']
-    
-    ternary_charts = ['ternary'] # Types of plot that show a ternary chart of the data
-    
-    text_charts = ['text'] # Types of plot that show a text charts and word clouds of the data, categorical input
-    
-    
-     # List of all available plot categories on plotly
-    #______________________________________________________________________________________________________________________________
-    
-    plot_categories_dict = {"basic" : basic, 
-                             "part_of_whole": part_of_whole,
-                             "distribution_1d" : distribution_1d, 
-                             "distribution_2d" : distribution_2d,
-                             "distribution_3d"  : distribution_3d,
-                             "matrix" : matrix,
-                             "image" : matrix,
-                             "multi_dimensional" : multi_dimensional,
-                             "tile_maps" : tile_maps,
-                             "outline_maps" : outline_maps,
-                             "polar_charts" : polar_charts,
-                             "ternary_charts" : ternary_charts,
-                             "text_charts" : text_charts
-                             } 
     
     
     #______________________________________________________________________________________________________________________________
