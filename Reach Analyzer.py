@@ -1,6 +1,7 @@
 import math
 import pprint
 import tarfile
+from tkinter.tix import COLUMN
 from unicodedata import numeric
 import numpy as np
 from re import T, U
@@ -37,6 +38,10 @@ def remove_null(data):
     else:
         print("No null values found in the data")
     return data
+
+# Function to reshape the dataframe to a 1D numpy array
+def numpyReshape(data):
+    return np.array(data).reshape(-1,1)
 
 # Factory function create a distribution of impressions from all relevant sources in a given dataset
 def distImpressionsFromVariousSources(data, traffic_features, target_feature="all"):
@@ -120,7 +125,7 @@ def getStats(data, feature_independent, feature_dependent, target="all"):
             return payload
     return useful_stats_dict.get(target) # Return the useful statistics dictionary
  
-  # Function to plot relationship between two features
+  # Function to plot relationship between two features, with regression line
 def scatterPlotWithBestFit(data, feature_independent, feature_dependent):
     
     figure = px.scatter(data_frame=data,x=feature_independent, y=feature_dependent, size =feature_dependent,
@@ -128,7 +133,7 @@ def scatterPlotWithBestFit(data, feature_independent, feature_dependent):
     
     return figure
 
-# Function to compare all features based on a given target statistic, leave target as "mean" to compare mean of all features, default is all statistics
+# Function to compare all features based on a given target statistic, leave target as "mean" to compare mean of all features, default is all statistics, features list "None to compare 1 feature to itself"
 def compareListOfFeaturesToFeature(data, feature_independent, features_list="None", target="all"):
     stats_dict = {}
     if features_list == "None":
@@ -138,10 +143,6 @@ def compareListOfFeaturesToFeature(data, feature_independent, features_list="Non
             stats_dict[f'{feature}'] = getStats(data, feature_independent, feature, target)
 
     return stats_dict
-
-# Function to reshape the dataframe to a 1D numpy array
-def numpyReshape(data):
-    return np.array(data).reshape(-1,1)
 
 # Factory function to create a linear regression model based on 2 given features and a dataframe
 def linearRegressor(data, feature_independent, feature_dependent):
@@ -197,12 +198,15 @@ def getStatsRelativeToTarget(data, relevant_features, feature_independent, targe
     sorted_data = pd.DataFrame.from_dict(metrics_dict, orient='index')
     return sorted_data
 
+# Functoin to sort a given dataframe by a given column, in descending order
 def sortDataframeDescending(data, target):
     return data.sort_values(by=target, ascending=False)
 
+# Functoin to sort a given dataframe by a given column, in descending order
 def sortDataframeAscending(data, target):
     return data.sort_values(by=target, ascending=True)
 
+# Functoion to create a CSV file from a given dataframe, with a given filename
 def createCSV(data, target_feature='independent variable'):
     title = data_r2.get(target_feature)[0]
     if target_feature == "independent variable" and title != "None":
@@ -215,7 +219,7 @@ def createCSV(data, target_feature='independent variable'):
         print(f"Created {filename}")
     else:
         filename = f"Target_feature metrics related to {title}.csv"
-        data.to_csv(filename, index=False)
+        data.to_csv(f"{filename}.csv", index=False)
         print(f"Created {filename}")
 
 # Get the conversion rate trend for a given feature, default is Follows but could also make sense for purchases or a target activity like Shares/Saves
@@ -264,17 +268,188 @@ def getTargetStub(data,y, features_list,  target='max'):
     for i in test.values():
         test_stub.append(i[target])
     return test_stub
+
+# Function to plot scatter plot of a given feature against a given target, default is all features and scatter 
+def plotFeatureVsTarget(data, target, feature, color = "", size="", type="scatter", show="False"):
+    if color == "": color = feature
+    if size == "": size = feature
     
+    match type:
+        case "scatter":
+            plot = px.scatter(data, y=data[feature], x=data[target], size =data[size], color=data[color],  trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    
+        case "scatter iris":
+            new_data = px.data.iris()
+            plot = px.scatter(new_data, y=data[feature], x=data[target], size =data[size], trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    
+        case "area":
+            plot = px.area(data, y=data[feature], x=data[target], color=data[color], title=f"{type} plot: Effect of {feature} on {target}")
+    
+        case "line":
+            plot = px.line(data, y=data[feature], x=data[target], color =target, title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "bar":
+            plot = px.bar(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "scatter_3d":
+            plot = px.scatter_3d(data, y=data[feature], x=data[target], size =feature, title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "line_3d":
+            plot = px.line_3d(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
+            
+        case "box": 
+            plot = px.box(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "violin":
+            plot = px.violin(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "histogram":
+            plot = px.histogram(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "distplot":
+            plot = px.distplot(data, y=data[feature], x=data[target], title=f"{type} plot: Effect of {feature} on {target}")
+        
+        case "scatter_matrix":
+            new_data = toIris(data) # Convert the dataframe to the Iris dataset format
+            plot = px.scatter_matrix(new_data)
+        case default:
+            plot = px.scatter(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    if show == "True":
+        plot.show()
+    return plot
+
+def toIris(data):
+    new_data = px.data.iris()
+    return new_data
 
 def main():
     data = pd.read_csv('Instagram.csv', encoding='latin-1') # Read the data
-    keyword = "From" # Set the keyword (prefix) to filter the features that relate to impressions from a particular source
-    engagement_features_list = ['Likes', 'Comments', 'Shares', 'Saves'] # List of features to be used for engagement
-    impressions_features_list = ['From Home', 'From Hashtags','From Explore', 'From Other'] # List of features to be used for traffic
-    numerical_features_list = ['Impressions', 'From Home', 'From Hashtags','From Explore', 'From Other', 'Likes', 'Comments', 'Shares', 'Saves', 'Profile Visits', 'Follows'] # List of features to be used for numerical values
-
     data = remove_null(data) # Remove null data points
+    
+    # Target stats to use to test the stats evaluations methods
+    target_stats = ['correlation', 
+                    'r2', 
+                    'coefficient of variation',
+                    'mean',
+                    'standard deviation',
+                    'skewness'
+                    ]
 
+    # Features in each category, exact categories and their content are specific to this data set.
+
+    engagement_features_list = ['Likes', # List of features to be used for engagement
+                                'Comments', 
+                                'Shares', 
+                                'Saves'] 
+    
+    impressions_features_list = ['From Home', # List of features to be used for traffic
+                                 'From Hashtags',
+                                 'From Explore', 
+                                 'From Other'
+                                 ] 
+    
+    numerical_features_list = ['Impressions', # List of features to be used for numerical values
+                               'From Home', 
+                               'From Hashtags',
+                               'From Explore', 
+                               'From Other', 
+                               'Likes', 
+                               'Comments', 
+                               'Shares', 
+                               'Saves', 
+                               'Profile Visits', 
+                               'Follows'
+                               ] 
+    
+    text_features_list = ['Hashtags', # List of features to be used for text data
+                          'Caption'
+                          ] 
+    
+    
+   
+    # The name of each plot category and the plot types that are available for them.
+    #______________________________________________________________________________________________________________________________
+    
+    basic = ['scatter', # Basic type of plot
+             'line',
+             'area', 
+             'bar', 
+             'funnel', 
+             'timeline']
+  
+    part_of_whole = ['pie', # Types of plot that show how certain data fits as part of a greater 'whole' data set
+                     'sunburst',
+                     'treemap',
+                     'icile',
+                     'funnel_area']
+   
+    distribution_1d = ['histogram',  # Types of plot that show 1D distributions of data
+                       'distplot',
+                       'box', 
+                       'violin', 
+                       'strip', 
+                       'ecdf']
+  
+    distribution_2d = ['density', # Types of plot that show 2D distributions of data, 2 axis so 2 features (columns)
+                       'heatmap', 
+                       'density_contour']
+  
+    distribution_3d = ['scatter_3d', # Types of plot that show 3D distributions of data, 3 axis so 3 features (columns)
+                       'line_3d']
+  
+    matrix = ['scatter_matrix', # Types of plot that show a matrix of data, (vector of columns)
+              'imshow']
+  
+    multi_dimensional = ['scatter_matrix', # Types of plot that show a multi dimensional data
+                         'imshow',
+                         'parallel_coordinates',
+                         'parallel_categories']
+  
+    tile_maps = ['scatter_mapbox', # Types of plot that show a tile map of the data
+                 'line_mapbox', 
+                 'chloropleth_mapbox',
+                 'density_mapbox']
+  
+    outline_maps = ['scatter_geo', # Types of plot that show a outline map of the data
+                    'line_geo',
+                    'chloropleth']
+   
+    polar_charts = [ 'scatter_polar', # Types of plot that show a polar chart of the data
+                    'line_polar',
+                    'bar_polar']
+    
+    ternary_charts = ['ternary'] # Types of plot that show a ternary chart of the data
+    
+    text_charts = ['text'] # Types of plot that show a text charts and word clouds of the data, categorical input
+    
+    
+     # List of all available plot categories on plotly
+    #______________________________________________________________________________________________________________________________
+    
+    plot_categories_dict = {"basic" : basic, 
+                             "part_of_whole": part_of_whole,
+                             "distribution_1d" : distribution_1d, 
+                             "distribution_2d" : distribution_2d,
+                             "distribution_3d"  : distribution_3d,
+                             "matrix" : matrix,
+                             "image" : matrix,
+                             "multi_dimensional" : multi_dimensional,
+                             "tile_maps" : tile_maps,
+                             "outline_maps" : outline_maps,
+                             "polar_charts" : polar_charts,
+                             "ternary_charts" : ternary_charts,
+                             "text_charts" : text_charts
+                             } 
+    
+
+    
+    
+    
+    #______________________________________________________________________________________________________________________________
+
+    # Plotting the data using the inbuilt functions
+    #______________________________________________________________________________________________________________________________
+    
     # norm_distr_impressions_all_sources =  distImpressionsFromVariousSources(data, impressions_features_list) # Plot the distribution of Impressions from various sources
     # norm_distr_impressions_all_sources.show()
 
@@ -287,7 +462,6 @@ def main():
     # wordcloud_hashtags.show() # Plot the wordcloud for the hashtags of the posts
 
     # feature_independent = 'Likes' # Set the feature to be analyzed
-    # target_stats = ['correlation', 'r2', 'coefficient of variation', 'mean', 'standard deviation', 'skewness']
     # stats_for_data = compareListOfFeaturesToFeature(data, feature_independent, features_list= ['From Explore', 'Follows', 'Profile Visits'], target=target_stats) # Compare the differences and relationship between Impressions and all other features
     # Print([f"Getting stats for {feature_independent}",stats_for_data])
 
@@ -304,13 +478,31 @@ def main():
     # total_conversion_rate = getFeatureConversionRateTotal(data, 'Profile Visits') # Get the total conversion rate for the given feature
     # Print([f"Total conversion rate of {'Profile Visits'}",total_conversion_rate])
     
+    #______________________________________________________________________________________________________________________________
+    
     features_list = ['Likes','Saves','Comments','Shares','Profile Visits', 'Follows']
     y = 'Impressions'
     test_stub_for_features = np.array([getTargetStub(data, y, features_list, 'max')])
     model = getModelPassiveAggressiveRegressor(data, features_list, y)
+
     
-   
+    y_feature = "Likes" 
+    x_feature = "Impressions"
     
+    colors = ['Likes', 'Comments', 'Shares', 'Saves']
+    sizes = ['From Home', 'From Hashtags','From Explore', 'From Other']
+    
+    # Testing the plotting categories, trying to make it easy to visualize different types of data, while being able to configure color, size, overlay multiple distributions on one another etc. 
+    for plot_type in plot_categories_dict["basic"]:
+        plot = plotFeatureVsTarget(data, x_feature, y_feature, type = plot_type)
+        plot.show()
+        plot = plotFeatureVsTarget(data, x_feature, y_feature, type = plot_type, size = x_feature)
+        plot.show()
+        plot = plotFeatureVsTarget(data, x_feature, y_feature, type = plot_type, color = x_feature)
+        plot.show()
+        plot = plotFeatureVsTarget(data, x_feature, y_feature, type = plot_type, color = x_feature, size = x_feature)
+        plot.show()
+
     y_prediction = model.predict(test_stub_for_features)
     print(y_prediction)
 
