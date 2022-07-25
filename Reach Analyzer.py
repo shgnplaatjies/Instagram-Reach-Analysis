@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.linear_model import PassiveAggressiveRegressor
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import inspect
 from collections.abc import Mapping
 import wordcloud
 
@@ -216,7 +217,7 @@ def scatterPlotWithBestFit(data, feature_independent, feature_dependent):
     return figure
 
 # Function to compare all features based on a given target statistic, leave target as "mean" to compare mean of all features, default is all statistics, features list "None to compare 1 feature to itself"
-def compareListOfFeaturesToFeature(data, feature_independent, features_list="None", target="all"):
+def compareListOfFeaturesToFeature(data, feature_independent, features_list, target="all"):
     stats_dict = {}
     if features_list == "None":
         features_list = data.columns.to_list()
@@ -352,69 +353,79 @@ def getTargetStub(data,y, features_list,  target='max'):
     return test_stub
 
 
-def tree_search(d, name):
-    if isinstance(d, Mapping):
-        if name in d:
-            yield d[name]
-        for it in d.values():
+def tree_search(dict, name):
+    if isinstance(dict, Mapping):
+        if name in dict:
+            yield dict[name]
+        for it in dict.values():
             for found in tree_search(it, name):
                 yield found            
 
-  
-def plotMethod(data, y="None", x="None", type="scatter",  color = "None", size="None", max_words="None", max_font_size="None", fig_size="None", interpolation='None', trendline = "None", title= "None"):
-    func = next(tree_search(plot_categories_dict, type))
-    # storing the function in a variable 
-    
-    optional_params_array = [y, x, color, size, max_words, max_font_size, fig_size, interpolation, trendline, title]
-    
-    # TODO: Add a check to make sure the generalized function call is valid. The type should match it's corresponding optional parameters. (And ignore incompatible parameters without interrupting user experience)
-    # TODO: I.e., if one of the optional params is == "None", don't pass it to the function. This will make the function call more flexible. 
-    # TODO: This is tricky because function calls are kind of hard-coded. The amount of optional props for all the relevant px. functions is pretty Huge and combinations, like permutations, grow exponentially.
-    try:
-        # if color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if color != "None": plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if size == "None": plot = func(data, y=y, x=x, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if size != "None": plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if size == "None" and color == "None": plot = func(data, y=y, x=x, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if size == "None" and color != "None": plot = func(data, y=y, x=x, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if size != "None" and color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        # if size != "None" and color != "None": plot = func(data, y=y, x=x, size=size, color=color, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-        
-        for feature_i in optional_params_array:
-            for feature_j in optional_params_array:
-                if feature_i == "None" and feature_j == "None":
-                    # TODO: Solved looping for the condition of isNone.. (sort of) But I don't yet know how to pass a functions parameters as an array, in the same way as a lambda I guess...
-                    plot = func(data, y=y, x=x, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-                if feature_i == "None":
-                    plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-                if feature_j == "None":
-                    plot = func(data, y=y, x=x, color=color, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
-                    
 
-        
-        
-    except: print(f"Error: Please check the type of plot you want to create matches the type of data you have created")
+
+def plotMethod(data_frame= "None", y="None", x="None", type="scatter",  color = "None", size="None", max_words="None", max_font_size="None", fig_size="None", interpolation='None', trendline = "None", title= "None"):
+    func = next(tree_search(plot_categories_dict, type))
+    local_vars_dict = locals()
+    state_list = [data_frame, y, x, type,  color , size, max_words, max_font_size, fig_size, interpolation, trendline , title] # !REMEMBER TO UPDATE THIS MANUALLY IF YOU ADD A NEW TYPE OF CONFIGURATION
+    # storing the function in a variable 
+    # print(next(tree_search(plot_categories_dict,type)).__name__) # prints the name of the function
+    
+    current_params_vals = inspect.getfullargspec(plotMethod)
+    args_info = compareMethodCompatibility(plotMethod, func, state_list) # Get a list of both incompatible[0] and compatible[1] arguments for the given function type
+    
+    arg_keys = args_info[2]
+    arg_values = []
+    
+    for param in args_info[2]:
+        arg_values.append(local_vars_dict[param])
+    
+    arg_dict = {arg_keys[i]: arg_values[i] for i in range(len(arg_keys))}
+    
+    plot = func(**arg_dict) # Call the function with the given parameters
+    # if color == "None": plot = func(data, y=y, x=x, size=size, max_words=max_words, max_font_size=max_font_size, fig_size=fig_size, interpolation=interpolation, trendline=trendline, title=title)
+
+
+    return plot
     #TODO: Add more options to the plot, such as color, max_words, max_font_size, fig_size, interpolation. AND options without a default value    
+    
+# Function to compare which of a specified methods functions are compatible with the given list of arguments    
+def compareMethodCompatibility(input_args, target_args, state_list):
+    current_params_vals = inspect.getfullargspec(input_args)
+    current_params_list = current_params_vals[0] # Array of our optional parameters
+    default_params_list = current_params_vals[3] # Array of our default parameters
+    legal_params_list = target_args.__code__.co_varnames[:target_args.__code__.co_argcount] # Array of our legal parameters
+    
+    params_block_list = []
+    params_halal_list = []
+
+    for param in current_params_list:
+        if param not in legal_params_list:
+            print(f"{param} is not a valid parameter for {target_args.__name__}")
+            params_block_list.append(param)
+        elif param in legal_params_list:
+            print(f"{param} is a valid parameter for {target_args.__name__}")
+            params_halal_list.append(param)
+            
+    params_to_pass = []
+    for param in params_halal_list:
+        for i in range(len(state_list)):
+            if str(param) == str(current_params_list[i]) and str(state_list[i]) != "None":
+                params_to_pass.append(param)
+                print(f"Passed config #{i} {current_params_list[i-1]} because {state_list[i]} != default {current_params_vals[3][i]}")
+                break
+        
+            
+            
+    return [params_block_list, params_halal_list, params_to_pass]
 
 # Function to plot scatter plot of a given feature against a given target, default is all features and scatter 
-def plotFeatureVsTarget(data, target, feature, color = "", size="", type="scatter", show="False", max_words=100, max_font_size=60, fig_size=(15,15), interpolation='bilinear'):
-    if color == "": color = feature
-    if size == "": size = feature 
+def plotFeatureVsTarget(data_frame, target, feature, color = "", size="", type="scatter", max_words=100, max_font_size=60, fig_size=(15,15), interpolation='bilinear'):
+    if (plot_categories_dict["basic"][type]) and type != "scatter":
+        # This is a function that returns a function. Dynamically call the function with ANY given parameters.
+        plot = plotMethod(data_frame = data_frame, y=data_frame[feature], x=data_frame[target], size =feature, title=f"{type} plot: Effect of {feature} on {target}")           # plot = px.scatter(data, y=data[feature], x=data[target], size =data[size], color=data[color],  trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
+    if type == "scatter":
+        plot = plotMethod(data_frame = data_frame, y=data_frame[feature], x=data_frame[target], trendline="os" , size =feature, title=f"{type} plot: Effect of {feature} on {target}")
     
-    if (plot_categories_dict["basic"][type]): 
-        # plotMethod = lambda funcToDo: funcToDo(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
-        # You should be calling the function as though it's real here.
-        plot = plotMethod(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
-    
-    
-    # match type:
-    #     case "size":
-    #         plot = px.scatter(data, y=data[feature], x=data[target], size =data[size], color=data[color],  trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
-    
-    #     case default:
-    #         plot = px.scatter(data, y=data[feature], x=data[target], size =feature, trendline = "ols", title=f"{type} plot: Effect of {feature} on {target}")
-    if show == "True":
-        plot.show()
     return plot
 
 def toIris(data):
